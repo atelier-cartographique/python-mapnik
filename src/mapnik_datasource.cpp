@@ -40,6 +40,7 @@
 #include <mapnik/feature_layer_desc.hpp>
 #include <mapnik/memory_datasource.hpp>
 
+#include "python_datasource.hpp"
 
 using mapnik::datasource;
 using mapnik::memory_datasource;
@@ -51,23 +52,23 @@ namespace
 {
 //user-friendly wrapper that uses Python dictionary
 using namespace boost::python;
-std::shared_ptr<mapnik::datasource> create_datasource(dict const& d)
+std::shared_ptr<mapnik::datasource> create_datasource(dict const &d)
 {
     mapnik::parameters params;
-    boost::python::list keys=d.keys();
-    for (int i=0; i < len(keys); ++i)
+    boost::python::list keys = d.keys();
+    for (int i = 0; i < len(keys); ++i)
     {
         std::string key = extract<std::string>(keys[i]);
         object obj = d[key];
         if (PyUnicode_Check(obj.ptr()))
         {
-            PyObject* temp = PyUnicode_AsUTF8String(obj.ptr());
+            PyObject *temp = PyUnicode_AsUTF8String(obj.ptr());
             if (temp)
             {
 #if PY_VERSION_HEX >= 0x03000000
-                char* c_str = PyBytes_AsString(temp);
+                char *c_str = PyBytes_AsString(temp);
 #else
-                char* c_str = PyString_AsString(temp);
+                char *c_str = PyString_AsString(temp);
 #endif
                 params[key] = std::string(c_str);
                 Py_DecRef(temp);
@@ -95,7 +96,7 @@ std::shared_ptr<mapnik::datasource> create_datasource(dict const& d)
     return mapnik::datasource_cache::instance().create(params);
 }
 
-boost::python::dict describe(std::shared_ptr<mapnik::datasource> const& ds)
+boost::python::dict describe(std::shared_ptr<mapnik::datasource> const &ds)
 {
     boost::python::dict description;
     mapnik::layer_descriptor ld = ds->get_descriptor();
@@ -103,20 +104,20 @@ boost::python::dict describe(std::shared_ptr<mapnik::datasource> const& ds)
     description["name"] = ld.get_name();
     description["geometry_type"] = ds->get_geometry_type();
     description["encoding"] = ld.get_encoding();
-    for (auto const& param : ld.get_extra_parameters())
+    for (auto const &param : ld.get_extra_parameters())
     {
         description[param.first] = param.second;
     }
     return description;
 }
 
-boost::python::list fields(std::shared_ptr<mapnik::datasource> const& ds)
+boost::python::list fields(std::shared_ptr<mapnik::datasource> const &ds)
 {
     boost::python::list flds;
     if (ds)
     {
         layer_descriptor ld = ds->get_descriptor();
-        std::vector<attribute_descriptor> const& desc_ar = ld.get_descriptors();
+        std::vector<attribute_descriptor> const &desc_ar = ld.get_descriptors();
         std::vector<attribute_descriptor>::const_iterator it = desc_ar.begin();
         std::vector<attribute_descriptor>::const_iterator end = desc_ar.end();
         for (; it != end; ++it)
@@ -126,13 +127,13 @@ boost::python::list fields(std::shared_ptr<mapnik::datasource> const& ds)
     }
     return flds;
 }
-boost::python::list field_types(std::shared_ptr<mapnik::datasource> const& ds)
+boost::python::list field_types(std::shared_ptr<mapnik::datasource> const &ds)
 {
     boost::python::list fld_types;
     if (ds)
     {
         layer_descriptor ld = ds->get_descriptor();
-        std::vector<attribute_descriptor> const& desc_ar = ld.get_descriptors();
+        std::vector<attribute_descriptor> const &desc_ar = ld.get_descriptors();
         std::vector<attribute_descriptor>::const_iterator it = desc_ar.begin();
         std::vector<attribute_descriptor>::const_iterator end = desc_ar.end();
         for (; it != end; ++it)
@@ -159,55 +160,63 @@ boost::python::list field_types(std::shared_ptr<mapnik::datasource> const& ds)
         }
     }
     return fld_types;
-}}
+}
 
-mapnik::parameters const& (mapnik::datasource::*params_const)() const =  &mapnik::datasource::params;
+std::shared_ptr<mapnik::datasource>
+create_python_datasource(boost::python::object const &ds)
+{
+    return std::shared_ptr<mapnik::datasource>(
+        new mapnik::python_datasource(ds));
+}
+}
 
+mapnik::parameters const &(mapnik::datasource::*params_const)() const = &mapnik::datasource::params;
 
 void export_datasource()
 {
     using namespace boost::python;
 
     enum_<mapnik::datasource::datasource_t>("DataType")
-        .value("Vector",mapnik::datasource::Vector)
-        .value("Raster",mapnik::datasource::Raster)
-        ;
+        .value("Vector", mapnik::datasource::Vector)
+        .value("Raster", mapnik::datasource::Raster);
 
     enum_<mapnik::datasource_geometry_t>("DataGeometryType")
-        .value("Point",mapnik::datasource_geometry_t::Point)
-        .value("LineString",mapnik::datasource_geometry_t::LineString)
-        .value("Polygon",mapnik::datasource_geometry_t::Polygon)
-        .value("Collection",mapnik::datasource_geometry_t::Collection)
-        ;
+        .value("Point", mapnik::datasource_geometry_t::Point)
+        .value("LineString", mapnik::datasource_geometry_t::LineString)
+        .value("Polygon", mapnik::datasource_geometry_t::Polygon)
+        .value("Collection", mapnik::datasource_geometry_t::Collection);
 
-    class_<datasource,std::shared_ptr<datasource>,
-        boost::noncopyable>("Datasource",no_init)
-        .def("type",&datasource::type)
-        .def("geometry_type",&datasource::get_geometry_type)
-        .def("describe",&describe)
-        .def("envelope",&datasource::envelope)
-        .def("features",&datasource::features)
-        .def("fields",&fields)
-        .def("field_types",&field_types)
-        .def("features_at_point",&datasource::features_at_point, (arg("coord"),arg("tolerance")=0))
-        .def("params",make_function(params_const,return_value_policy<copy_const_reference>()),
+    class_<datasource, std::shared_ptr<datasource>,
+           boost::noncopyable>("Datasource", no_init)
+        .def("type", &datasource::type)
+        .def("geometry_type", &datasource::get_geometry_type)
+        .def("describe", &describe)
+        .def("envelope", &datasource::envelope)
+        .def("features", &datasource::features)
+        .def("fields", &fields)
+        .def("field_types", &field_types)
+        .def("features_at_point", &datasource::features_at_point, (arg("coord"), arg("tolerance") = 0))
+        .def("params", make_function(params_const, return_value_policy<copy_const_reference>()),
              "The configuration parameters of the data source. "
              "These vary depending on the type of data source.")
-        .def(self == self)
-        ;
+        .def(self == self);
 
-    def("CreateDatasource",&create_datasource);
+    def("CreateDatasource", &create_datasource);
 
     class_<memory_datasource,
            bases<datasource>, std::shared_ptr<memory_datasource>,
            boost::noncopyable>("MemoryDatasourceBase", init<parameters>())
-        .def("add_feature",&memory_datasource::push,
+        .def("add_feature", &memory_datasource::push,
              "Adds a Feature:\n"
              ">>> ms = MemoryDatasource()\n"
              ">>> feature = Feature(1)\n"
              ">>> ms.add_feature(Feature(1))\n")
-        .def("num_features",&memory_datasource::size)
-        ;
+        .def("num_features", &memory_datasource::size);
 
-    implicitly_convertible<std::shared_ptr<memory_datasource>,std::shared_ptr<datasource> >();
+    class_<mapnik::python_datasource, bases<datasource>,
+           boost::noncopyable>("PythonDatasource",
+                               "This class represents a python datasource", no_init);
+    def("create_python_datasource", &create_python_datasource);
+
+    implicitly_convertible<std::shared_ptr<memory_datasource>, std::shared_ptr<datasource>>();
 }

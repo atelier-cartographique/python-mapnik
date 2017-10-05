@@ -90,25 +90,30 @@ class _MapnikMetaclass(BoostPythonMetaclass):
 
 # metaclass injector compatible with both python 2 and 3
 # http://mikewatkins.ca/2008/11/29/python-2-and-3-metaclasses/
-def _injector() :
+
+
+def _injector():
     return _MapnikMetaclass('_injector', (object, ), {})
 
 
 def Filter(*args, **kwargs):
-    warnings.warn("'Filter' is deprecated and will be removed in Mapnik 3.x, use 'Expression' instead",
-                  DeprecationWarning, 2)
+    warnings.warn(
+        "'Filter' is deprecated and will be removed in Mapnik 3.x, use 'Expression' instead",
+        DeprecationWarning, 2)
     return Expression(*args, **kwargs)
 
 
 class Envelope(Box2d):
 
     def __init__(self, *args, **kwargs):
-        warnings.warn("'Envelope' is deprecated and will be removed in Mapnik 3.x, use 'Box2d' instead",
-                      DeprecationWarning, 2)
+        warnings.warn(
+            "'Envelope' is deprecated and will be removed in Mapnik 3.x, use 'Box2d' instead",
+            DeprecationWarning, 2)
         Box2d.__init__(self, *args, **kwargs)
 
 
 class _Coord(Coord, _injector()):
+
     """
     Represents a point with two coordinates (either lon/lat or x/y).
 
@@ -184,6 +189,7 @@ class _Coord(Coord, _injector()):
 
 
 class _Box2d(Box2d, _injector()):
+
     """
     Represents a spatial envelope (i.e. bounding box).
 
@@ -276,7 +282,7 @@ class _Geometry(Geometry, _injector()):
 
 class _Datasource(Datasource, _injector()):
 
-    def featureset(self, fields = None, variables = {}):
+    def featureset(self, fields=None, variables={}):
         query = Query(self.envelope())
         query.set_variables(variables)
         attributes = fields or self.fields()
@@ -284,9 +290,10 @@ class _Datasource(Datasource, _injector()):
             query.add_property_name(fld)
         return self.features(query)
 
-    def __iter__(self, fields = None, variables = {}):
+    def __iter__(self, fields=None, variables={}):
         return self.featureset(fields, variables)
     # backward caps helper
+
     def all_features(self, fields=None, variables={}):
         return self.__iter__(fields, variables)
 
@@ -688,16 +695,16 @@ def Osm(**keywords):
     return CreateDatasource(keywords)
 
 
-def Python(**keywords):
-    """Create a Python Datasource.
+# def Python(**keywords):
+#     """Create a Python Datasource.
 
-    >>> from mapnik import Python, PythonDatasource
-    >>> datasource = Python('PythonDataSource')
-    >>> lyr = Layer('Python datasource')
-    >>> lyr.datasource = datasource
-    """
-    keywords['type'] = 'python'
-    return CreateDatasource(keywords)
+#     >>> from mapnik import Python, PythonDatasource
+#     >>> datasource = Python('PythonDataSource')
+#     >>> lyr = Layer('Python datasource')
+#     >>> lyr.datasource = datasource
+#     """
+#     keywords['type'] = 'python'
+#     return CreateDatasource(keywords)
 
 
 def MemoryDatasource(**keywords):
@@ -712,6 +719,7 @@ def MemoryDatasource(**keywords):
 
 
 class PythonDatasource(object):
+
     """A base class for a Python data source.
 
     Optional arguments:

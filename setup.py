@@ -111,14 +111,14 @@ else:
 
 
 linkflags = []
-lib_path = os.path.join(check_output([mapnik_config, '--prefix']),'lib')
+lib_path = os.path.join(check_output([mapnik_config, '--prefix']), 'lib')
 linkflags.extend(check_output([mapnik_config, '--libs']).split(' '))
 linkflags.extend(check_output([mapnik_config, '--ldflags']).split(' '))
 linkflags.extend(check_output([mapnik_config, '--dep-libs']).split(' '))
 linkflags.extend([
-'-lmapnik-wkt',
-'-lmapnik-json',
-] + ['-l%s' % i for i in get_boost_library_names()])
+                 '-lmapnik-wkt',
+                 '-lmapnik-json',
+                 ] + ['-l%s' % i for i in get_boost_library_names()])
 
 # Dynamically make the mapnik/paths.py file
 f_paths = open('mapnik/paths.py', 'w')
@@ -163,8 +163,10 @@ if mason_build:
             pass
     f_paths.write(
         'mapniklibpath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "lib")\n')
-    f_paths.write("inputpluginspath = os.path.join(mapniklibpath, 'mapnik', 'input')\n")
-    f_paths.write("fontscollectionpath = os.path.join(mapniklibpath, 'mapnik', 'fonts')\n")
+    f_paths.write(
+        "inputpluginspath = os.path.join(mapniklibpath, 'mapnik', 'input')\n")
+    f_paths.write(
+        "fontscollectionpath = os.path.join(mapniklibpath, 'mapnik', 'fonts')\n")
     f_paths.write(
         "__all__ = [mapniklibpath,inputpluginspath,fontscollectionpath]\n")
     f_paths.close()
@@ -188,7 +190,7 @@ if mason_build:
 
     share_dir = 'share'
 
-    for dep in ['icu','gdal','proj']:
+    for dep in ['icu', 'gdal', 'proj']:
         share_path = os.path.join('mapnik', share_dir, dep)
         if not os.path.exists(share_path):
             os.makedirs(share_path)
@@ -196,7 +198,7 @@ if mason_build:
     icu_path = 'mason_packages/.link/share/icu/*/*.dat'
     icu_files = glob.glob(icu_path)
     if len(icu_files) != 1:
-        raise Exception("Failed to find icu dat file at "+ icu_path)
+        raise Exception("Failed to find icu dat file at " + icu_path)
     for f in icu_files:
         shutil.copyfile(f, os.path.join(
             'mapnik', share_dir, 'icu', os.path.basename(f)))
@@ -223,15 +225,17 @@ if mason_build:
 
 extra_comp_args = check_output([mapnik_config, '--cflags']).split(' ')
 
-extra_comp_args = list(filter(lambda arg: arg != "-fvisibility=hidden", extra_comp_args))
+extra_comp_args = list(
+    filter(lambda arg: arg != "-fvisibility=hidden", extra_comp_args))
 
 if os.environ.get("PYCAIRO", "false") == "true":
     try:
         extra_comp_args.append('-DHAVE_PYCAIRO')
         print("-I%s/include/pycairo".format(sys.exec_prefix))
         extra_comp_args.append("-I{0}/include/pycairo".format(sys.exec_prefix))
-        #extra_comp_args.extend(check_output(["pkg-config", '--cflags', 'pycairo']).strip().split(' '))
-        #linkflags.extend(check_output(["pkg-config", '--libs', 'pycairo']).strip().split(' '))
+        # extra_comp_args.extend(check_output(["pkg-config", '--cflags', 'pycairo']).strip().split(' '))
+        # linkflags.extend(check_output(["pkg-config", '--libs',
+        # 'pycairo']).strip().split(' '))
     except:
         raise Exception("Failed to find compiler options for pycairo")
 
@@ -254,7 +258,7 @@ if os.environ.get("CXX", False) == False:
 setup(
     name="mapnik",
     version="0.1",
-    packages=['mapnik','mapnik.printing'],
+    packages=['mapnik', 'mapnik.printing'],
     author="Blake Thompson",
     author_email="flippmoke@gmail.com",
     description="Python bindings for Mapnik",
@@ -307,6 +311,7 @@ setup(
             'src/mapnik_symbolizer.cpp',
             'src/mapnik_view_transform.cpp',
             'src/python_grid_utils.cpp',
+            'src/python_datasource.cpp',
         ],
             language='c++',
             extra_compile_args=extra_comp_args,
